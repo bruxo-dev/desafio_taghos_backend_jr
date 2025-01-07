@@ -1,24 +1,23 @@
 package main
 
 import (
-	"database/sql"
+	"desafio_taghos/db"
 	"desafio_taghos/internal/handlers"
 	"desafio_taghos/internal/routes"
 	"desafio_taghos/internal/services"
 	"log"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
 )
 
 func main() {
-	db, err := sql.Open("postgres", "user=youruser dbname=yourdb sslmode=disable")
+	database, err := db.Connect()
 	if err != nil {
 		log.Fatalf("Could not connect to the database: %s\n", err)
 	}
-	defer db.Close()
+	defer database.Close()
 
-	service := services.NewService(db)
+	service := services.NewService(database)
 	handler, err := handlers.NewHandler(service)
 	if err != nil {
 		log.Fatalf("Could not initialize handler: %s\n", err)
