@@ -24,6 +24,7 @@ func main() {
 	}
 
 	engine := gin.Default()
+	engine.Use(gin.Recovery()) // Middleware for error handling
 	routes.SetupRoutes(engine, handler)
 	log.Println("Starting server on :8080")
 	if err := engine.Run(":8080"); err != nil {

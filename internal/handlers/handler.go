@@ -3,62 +3,122 @@ package handlers
 import (
 	"desafio_taghos/internal/models"
 	"desafio_taghos/internal/services"
-	"encoding/json"
+	"desafio_taghos/pkg/utils"
 	"net/http"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 type Handler struct {
-	service *services.Service
+	service  *services.Service
+	validate *validator.Validate
 }
 
 func NewHandler(service *services.Service) (*Handler, error) {
-	return &Handler{service: service}, nil
+	return &Handler{
+		service:  service,
+		validate: validator.New(),
+	}, nil
 }
 
-func (h *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := h.service.FetchUsers()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(users)
-}
-
-func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	var user models.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if err := h.service.AddUser(user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
-}
-
-func (h *Handler) GetBooks(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetBooks(c *gin.Context) {
 	books, err := h.service.FetchBooks()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(books)
+	c.JSON(http.StatusOK, books)
 }
 
-func (h *Handler) CreateBook(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetBookById(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid book ID"})
+		return
+	}
+	book, err := h.service.FetchBookByID(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if book == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Book not found"})
+		return
+	}
+	c.JSON(http.StatusOK, book)
+}
+
+func (h *Handler) CreateBook(c *gin.Context) {
 	var book models.Book
-	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&book); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	book.Title = utils.SanitizeInput(book.Title)
+	book.Category = utils.SanitizeInput(book.Category)
+	book.Author = utils.SanitizeInput(book.Author)
+	book.Synopsis = utils.SanitizeInput(book.Synopsis)
+	if err := h.validate.Struct(book); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	if err := h.service.AddBook(book); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(book)
+	c.JSON(http.StatusCreated, book)
+}
+
+func (h *Handler) UpdateBookById(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid book ID"})
+		return
+	}
+
+	// Check if the book exists
+	existingBook, err := h.service.FetchBookByID(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if existingBook == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Book not found"})
+		return
+	}
+
+	var book models.Book
+	if err := c.ShouldBindJSON(&book); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	book.ID = id
+	book.Title = utils.SanitizeInput(book.Title)
+	book.Category = utils.SanitizeInput(book.Category)
+	book.Author = utils.SanitizeInput(book.Author)
+	book.Synopsis = utils.SanitizeInput(book.Synopsis)
+	if err := h.validate.Struct(book); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.service.UpdateBook(book); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, book)
+}
+
+func (h *Handler) DeleteBookById(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid book ID"})
+		return
+	}
+	if err := h.service.DeleteBook(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
 }
