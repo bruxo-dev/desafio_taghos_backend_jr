@@ -2,20 +2,25 @@ package handlers
 
 import (
 	"desafio_taghos/internal/models"
+	"desafio_taghos/internal/services"
 	"encoding/json"
 	"net/http"
 )
 
-type Handler struct{}
+type Handler struct {
+	service *services.Service
+}
 
-func NewHandler() (*Handler, error) {
-	// Initialize any dependencies here if needed
-	return &Handler{}, nil
+func NewHandler(service *services.Service) (*Handler, error) {
+	return &Handler{service: service}, nil
 }
 
 func (h *Handler) GetItems(w http.ResponseWriter, r *http.Request) {
-	// Logic to fetch items
-	items := []models.Item{} // Replace with actual fetching logic
+	items, err := h.service.FetchItems()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(items)
 }
@@ -26,7 +31,10 @@ func (h *Handler) CreateItem(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	// Logic to create item
+	if err := h.service.AddItem(item); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(item)
 }
