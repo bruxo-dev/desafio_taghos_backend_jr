@@ -3,6 +3,7 @@ export DB_USER="postgres"
 export DB_PASSWORD="123123"
 export DB_NAME="desafio_taghos"
 export DB_SSLMODE="disable"
+export DB_HOST: "db"
 
 echo "Installing dependencies..."
 go mod tidy

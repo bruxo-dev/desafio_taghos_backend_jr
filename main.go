@@ -6,11 +6,17 @@ import (
 	"desafio_taghos/internal/routes"
 	"desafio_taghos/internal/services"
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	dbHost := os.Getenv("DB_HOST")
+	if dbHost == "" {
+		log.Fatal("DB_HOST environment variable is not set")
+	}
+
 	database, err := db.Connect()
 	if err != nil {
 		log.Fatalf("Could not connect to the database: %s\n", err)

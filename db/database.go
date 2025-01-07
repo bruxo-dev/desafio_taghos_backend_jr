@@ -9,8 +9,8 @@ import (
 )
 
 func Connect() (*sql.DB, error) {
-	connStr := fmt.Sprintf("user=%s password=%s sslmode=%s",
-		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_SSLMODE"))
+	connStr := fmt.Sprintf("host=%s user=%s password=%s sslmode=%s",
+		os.Getenv("DB_HOST"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_SSLMODE"))
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
@@ -25,8 +25,8 @@ func Connect() (*sql.DB, error) {
 	db.Close()
 
 	// Connect to the specific database
-	connStr = fmt.Sprintf("user=%s password=%s dbname=%s sslmode=%s",
-		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"), os.Getenv("DB_SSLMODE"))
+	connStr = fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=%s",
+		os.Getenv("DB_HOST"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"), os.Getenv("DB_SSLMODE"))
 	db, err = sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
