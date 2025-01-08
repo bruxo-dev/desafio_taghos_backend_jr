@@ -57,7 +57,7 @@ Esta API permite gerenciar uma coleção de livros de usuários, oferecendo endp
    ```
 3. Suba os contêineres:
    ```bash
-   docker-compose up -d
+   docker-compose up --build
    ```
 4. A API estará disponível em: `http://localhost:8080`.
 
