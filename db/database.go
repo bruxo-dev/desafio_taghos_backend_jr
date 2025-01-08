@@ -16,15 +16,12 @@ func Connect() (*sql.DB, error) {
 		return nil, err
 	}
 
-	// Create the database if it does not exist
 	if err := createDatabase(db); err != nil {
 		return nil, err
 	}
 
-	// Close the initial connection before connecting to the specific database
 	db.Close()
 
-	// Connect to the specific database
 	connStr = fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=%s",
 		os.Getenv("DB_HOST"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"), os.Getenv("DB_SSLMODE"))
 	db, err = sql.Open("postgres", connStr)
@@ -32,7 +29,6 @@ func Connect() (*sql.DB, error) {
 		return nil, err
 	}
 
-	// Initialize the database schema
 	if err := initDB(db); err != nil {
 		return nil, err
 	}
